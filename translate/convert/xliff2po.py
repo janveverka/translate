@@ -40,22 +40,35 @@ class xliff2po(object):
             thepo.source = transunit.source
         thepo.target = transunit.target
 
+        notes = []
+
+        # Custom ProtonMail autocommnets begin
         # Location comments
-        locations = transunit.getlocations()
-        if locations:
-            thepo.addlocations(locations)
+        for location in transunit.getlocations():
+            notes.append("location=%s" % location)
 
         # NOTE: Supporting both <context> and <note> tags in xliff files
         # for comments
         # Translator comments
-        trancomments = transunit.getnotes("translator")
-        if trancomments:
-            thepo.addnote(trancomments, origin="translator")
+        for trancomment in transunit.getnotes("translator"):
+            notes.append("translator=%s" % trancomment)
 
         # Automatic and Developer comments
-        autocomments = transunit.getnotes("developer")
-        if autocomments:
-            thepo.addnote(autocomments, origin="developer")
+        for autocomment in transunit.getnotes("developer"):
+            notes.append("auto=%s" % autocomment)
+
+        # Make sure we have at least one comment
+        if not notes:
+            notes.append("")
+
+        for note in notes:
+            if note:
+                note = "tag=ios; " + note
+            else:
+                note = "tag=ios"
+            thepo.addnote(note.strip(), origin="developer")
+
+        # Custom ProtonMail autocommnets end
 
         # See 5.6.1 of the spec. We should not check fuzzyness, but approved
         # attribute
