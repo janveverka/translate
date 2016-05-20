@@ -743,6 +743,16 @@ class pounit(pocommon.pounit):
             id = u"%s\04%s" % (context, id)
         return id
 
+    def addtag(self):
+        added_tag = False
+        for comments in self.allcomments:
+            for index, line in enumerate(comments):
+                prefix = line.split()[0]
+                comments[index] = line.replace(prefix, prefix + ' tag=ios;')
+                added_tag = True
+        # Make sure every unit has at least one tag
+        if not added_tag:
+            self.addnote('tag=ios', origin='developer')
 
 class pofile(pocommon.pofile):
     """A .po file containing various units"""
@@ -867,3 +877,7 @@ class pofile(pocommon.pofile):
         for unit in self.units:
             if not (unit.isheader() or unit.isobsolete()):
                 yield unit
+
+    def addtags(self):
+        for unit in self.unit_iter():
+            unit.addtag()

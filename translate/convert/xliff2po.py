@@ -57,6 +57,33 @@ class xliff2po(object):
         if autocomments:
             thepo.addnote(autocomments, origin="developer")
 
+        # Other comments
+        allcomments = transunit.getnotes()
+        if allcomments:
+            for comment in allcomments.strip().split("\n"):
+                if comment in trancomments or comment in autocomments:
+                    continue
+                # Extract context
+                context_lines = []
+                if 'Note =' in comment:
+                    # Example comment:
+                    # Class = "UILabel"; text = "Label"; ObjectID = "afY-mg-s8l"; Note = "This is a test object note";
+                    # Here, context is:
+                    # This is a test object note
+                    # Comment after the context is extracted:
+                    # Class = "UILabel"; text = "Label"; ObjectID = "afY-mg-s8l";
+                    ctoks = [t for t in comment.split(";") if 'Note' in t]
+                    toks  = [t for t in comment.split(";") if 'Note' not in t]
+                    line = ctoks[0].strip().replace('Note = ', '').strip('"')
+                    context_lines.append(line)
+                    comment = ';'.join(toks)
+                    thepo.addnote(comment, origin="developer")
+                elif 'Class =' not in comment:
+                    context_lines.append(comment)
+            context = "\n".join(context_lines).strip()
+            if context:
+                thepo.setcontext(context)
+
         # See 5.6.1 of the spec. We should not check fuzzyness, but approved
         # attribute
         if transunit.isfuzzy():
@@ -97,6 +124,7 @@ def convertxliff(inputfile, outputfile, templates, duplicatestyle="msgctxt"):
     outputstore = convertor.convertstore(inputfile, duplicatestyle)
     if outputstore.isempty():
         return 0
+    outputstore.addtags()
     outputstore.serialize(outputfile)
     return 1
 
